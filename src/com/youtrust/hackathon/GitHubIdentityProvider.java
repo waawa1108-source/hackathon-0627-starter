@@ -34,33 +34,3 @@ public final class GitHubIdentityProvider implements IdentityProvider {
     }
 }
 
-/** OAuthプロバイダとの通信の抽象（GitHub / Google / LINE で使い回せる）。 */
-interface OAuthClient {
-    OAuthProfile exchange(String authorizationCode);
-}
-
-/** OAuthで取得した外部プロフィール。 */
-final class OAuthProfile {
-    private final String externalId;
-    private final String email;
-    private final String name;
-
-    OAuthProfile(String externalId, String email, String name) {
-        this.externalId = externalId;
-        this.email = email;
-        this.name = name;
-    }
-
-    String externalId() { return externalId; }
-    String email() { return email; }
-    String name() { return name; }
-}
-
-/** GitHub OAuth通信のスタブ（外部通信なし）。本物のGitHub APIに差し替え可能。 */
-final class StubGitHubOAuthClient implements OAuthClient {
-    @Override
-    public OAuthProfile exchange(String authorizationCode) {
-        // 本来は code -> access token -> GET /user で取得する
-        return new OAuthProfile("gh_12345", "octocat@github.com", "The Octocat");
-    }
-}

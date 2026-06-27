@@ -1,58 +1,42 @@
-# 設計力を磨く！現役エンジニア伴走ハッカソン 🔥
+# YOUTRUST ユーザー登録 — リファクタリング（Dチーム）
 
-**2025年6月27日（土） 15:30〜19:00｜虎ノ門ヒルズ森タワー5階**
+「設計力を磨く！現役エンジニア伴走ハッカソン」提出物。**チーム名：Dチーム ／ メンバー：福澤亜真**
 
-## このリポジトリについて
+スターターの `UserRegistrationService`（登録処理が1メソッドに密結合）を、
+**認証手段を後から追加できる設計**にリファクタリングした。
 
-ハッカソン参加者全員共通のスターターコードです。  
-Forkして、チームのリポジトリで作業を進めてください。
+## お題
 
----
+GitHub OAuth 登録を追加し、将来 Google / LINE も足せる構造にする。
+パスワード登録と同じ後続処理（ウェルカムメール・ログ記録）を、全手段で共通に通す。
 
-## 参加手順
+## 設計の要点
 
-### 1. このリポジトリをForkする
+- 登録を **①本人確認（手段ごと）→ ②保存 → ③後続施策**（②③は共通）に分離
+- 認証手段は `IdentityProvider` で抽象化 — 新手段は **実装1ファイル＋登録1行** で追加（既存コード無改修＝開放閉鎖原則）
+- 後続施策は `PostRegistrationAction` のプラグイン列 — 登録数を増やす施策（イベント案内・招待）を本体無改修で追加
+- 例外を原因別に分割（Validation / Authentication / DuplicateEmail）
+- インフラ（DB / メール / ログ）は DI で注入しテスタブル化
 
-画面右上の「Fork」ボタンをクリックしてください。
-
-### 2. チームで開発を進める
-
-ForkしたリポジトリをCloneして、チームで実装してください。
-
-### 3. 提出物を揃える
-
-以下の3ファイルを完成させてください。
-
-- `src/UserRegistrationService.java` - リファクタリング後のコード
-- `DESIGN.md` - 設計ドキュメント（テンプレートあり）
-- `DECISIONS.md` - 設計判断ログ（テンプレートあり）
-
-### 4. リポジトリURLを運営に共有する
-
-発表前に、ForkしたリポジトリのURLをスタッフに共有してください。
-
----
+→ 詳細は **DESIGN.md**（全体図つき）と **DECISIONS.md**（ADR＋設計判断の言語化）
 
 ## ファイル構成
 
 ```
-hackathon-0627-starter/
-├── README.md                        # このファイル
-├── DESIGN.md                        # 設計ドキュメント（テンプレート）
-├── DECISIONS.md                     # 設計判断ログ（テンプレート）
-└── src/
-    └── UserRegistrationService.java # スターターコード
+src/com/youtrust/hackathon/   … Java ソース一式（package com.youtrust.hackathon）
+DESIGN.md                     … 設計ドキュメント
+DECISIONS.md                  … 設計判断ログ（ADR）
 ```
 
+## ビルド & 実行
+
+```
+javac -d out $(find src -name "*.java")
+java -cp out com.youtrust.hackathon.Main
+```
+
+`Main` はパスワード登録・GitHub OAuth 登録・重複検知のデモを実行する。
+
 ---
 
-## 評価のポイント
-
-- 動くことよりも「**なぜそう設計したか**」が重視されます
-- 設計の意図・理由をDESIGN.md と DECISIONS.md に書いてください
-- 審査員・メンターへの質問は積極的にどうぞ！
-
----
-
-主催：YOUTRUST  
-Engineering Partners：dip / Timee / STORES
+主催：YOUTRUST ／ Engineering Partners：dip / Timee / STORES

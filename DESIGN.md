@@ -1,7 +1,7 @@
 # 設計ドキュメント
 
-> チーム名：（当日記入）
-> メンバー：（当日記入）
+> チーム名：Dチーム
+> メンバー：福澤亜真
 
 ---
 
@@ -36,56 +36,27 @@
 
 ## 3. クラス構成と関係（全体図）
 
-`register()` を縦に追うと、①本人確認 → ②保存 → ③後続施策 の流れに、各インターフェースと実装がぶら下がる。
-凡例：`«IF»`=インターフェース（抽象） / `─►`=依存・呼び出し / `★拡張点`=新しい手段・施策を足す場所
+登録は `register()` が **①本人確認 → ②保存 → ③後続施策** の3ステップを順に流すだけ。
+手段ごとに変わるのは①のみで、②③は全手段で共通。だから——
+新しい認証手段は **★①** へ、登録数を増やす新施策は **★②** へ足すだけで、本体は無改修で済む。
 
 ```
-  service.register(AuthRequest)          AuthRequest … 入力（ファクトリ: password() / oauth()）
-        │
-        ▼
-  ┌──────────────────────────────────────────────────────────┐
-  │  UserRegistrationService                                 │  ← オーケストレーション（薄い）
-  │  register(AuthRequest) : RegisterResult                  │
-  └──────────────────────────────────────────────────────────┘
-        │
-        │ ① 本人確認（手段ごとに異なる）
-        ▼
-   IdentityProviderRegistry ─resolve(method)─► IdentityProvider «IF»          ★拡張点①
-                                                ├─ PasswordIdentityProvider ─► PasswordHasher «IF» ─► DummyPasswordHasher
-                                                └─ GitHubIdentityProvider ───► OAuthClient «IF» ────► StubGitHubOAuthClient
-                                                                                                      └─► OAuthProfile
-        │  verify() が返す
-        ▼
-   VerifiedIdentity   ← ①と②の「境界面」。ここから先は手段に依存しない
-        │
-        │ ② 重複チェック ＆ 保存（全手段で共通）
-        ▼
-   UserRepository «IF» ─► InMemoryUserRepository ─► User
-        │
-        │ ③ 後続施策を順に実行（全手段で共通・ベストエフォート）
-        ▼
-   List<PostRegistrationAction «IF»>                                          ★拡張点②
-        ├─ WelcomeMailAction ─────────► WelcomeMailer «IF» ───────► ConsoleWelcomeMailer
-        ├─ AuditLogAction ────────────► RegistrationAuditLog «IF» ─► LoggingRegistrationAuditLog
-        ├─ EventRecommendationAction ─► EventCatalog «IF» ────────► StaticEventCatalog ─► EngineerEvent
-        └─ ReferralInvitationAction ──► InvitationIssuer «IF» ────► TokenInvitationIssuer ─► Invitation
-        │
-        ▼
-   RegisterResult   … 戻り値（success / userId / message）
+               ① 本人確認          ② 保存              ③ 後続施策
+              （手段ごと / ★①）     （共通）            （共通・複数 / ★②）
 
-  ── 横断的な要素 ───────────────────────────────────────────────
-   AuthMethod «enum» : PASSWORD | GITHUB | GOOGLE | LINE   … 手段の識別子（将来DBの provider 列に対応）
-
-   RegistrationException «abstract（RuntimeException）»
-        ├─ ValidationException       (入力不正 / 400相当)
-        ├─ AuthenticationException   (本人確認失敗 / 401相当)
-        └─ DuplicateEmailException   (メール重複 / 409相当)
-
-   Main … DI の組み立て（プロバイダ登録＋施策リスト構築）と動作デモ
+ AuthRequest ─► IdentityProvider ─► UserRepository ─► PostRegistrationAction ─► RegisterResult
+  (入力)            │
+              VerifiedIdentity ← ①と②の境界（手段に依存しない確定情報）
 ```
 
-**この図の読みどころ**：縦の流れ（①→②→③）のうち、手段ごとに変わるのは①だけ。②③は全手段で共通。
-だから新しい認証手段は`★拡張点①`に、登録数を増やす新施策は`★拡張点②`に足すだけで、`UserRegistrationService`本体は無改修で済む。
+各ステップの抽象（インターフェース）と実装:
+
+| ステップ | 抽象 | 実装 |
+|---------|------|------|
+| ① 本人確認 ★① | `IdentityProvider` | `PasswordIdentityProvider` / `GitHubIdentityProvider`（将来 Google・LINE） |
+| ② 保存 | `UserRepository` | `InMemoryUserRepository` |
+| ③ 後続施策 ★② | `PostRegistrationAction` | `WelcomeMail` / `AuditLog` / `EventRecommendation` / `ReferralInvitation` |
+| 例外 | `RegistrationException` | `ValidationException`(400) / `AuthenticationException`(401) / `DuplicateEmailException`(409) |
 
 ## 4. 工夫したポイント
 

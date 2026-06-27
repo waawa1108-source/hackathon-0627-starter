@@ -25,30 +25,3 @@ public final class ReferralInvitationAction implements PostRegistrationAction {
     }
 }
 
-/** 招待リンクを発行する。 */
-interface InvitationIssuer {
-    Invitation issueFor(User user);
-}
-
-/** ユーザーごとに一意な招待コードを発行する実装。 */
-final class TokenInvitationIssuer implements InvitationIssuer {
-    @Override
-    public Invitation issueFor(User user) {
-        String code = "INV-" + Integer.toHexString(user.getId().hashCode()).toUpperCase();
-        return new Invitation(code, "https://youtrust.example/invite/" + code);
-    }
-}
-
-/** 発行済みの招待。 */
-final class Invitation {
-    private final String code;
-    private final String url;
-
-    Invitation(String code, String url) {
-        this.code = code;
-        this.url = url;
-    }
-
-    String code() { return code; }
-    String url() { return url; }
-}

@@ -37,34 +37,3 @@ public final class EventRecommendationAction implements PostRegistrationAction {
     }
 }
 
-/** 案内対象のエンジニア向けイベント一覧を提供する。 */
-interface EventCatalog {
-    List<EngineerEvent> upcomingEvents();
-}
-
-/** 直近イベントの固定実装（本番はイベント管理サービスに差し替え）。 */
-final class StaticEventCatalog implements EventCatalog {
-    @Override
-    public List<EngineerEvent> upcomingEvents() {
-        return List.of(
-                new EngineerEvent("YOUTRUST Tech Meetup #5", "2026-07-15", "https://youtrust.example/events/5/apply"),
-                new EngineerEvent("リファクタリング・ナイト", "2026-07-22", "https://youtrust.example/events/6/apply"));
-    }
-}
-
-/** エンジニア向けイベント。 */
-final class EngineerEvent {
-    private final String title;
-    private final String date;
-    private final String applyUrl;
-
-    EngineerEvent(String title, String date, String applyUrl) {
-        this.title = title;
-        this.date = date;
-        this.applyUrl = applyUrl;
-    }
-
-    String title() { return title; }
-    String date() { return date; }
-    String applyUrl() { return applyUrl; }
-}

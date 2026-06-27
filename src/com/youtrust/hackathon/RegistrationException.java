@@ -6,6 +6,8 @@ package com.youtrust.hackathon;
  * （元コードは何でも Exception / IllegalArgumentException で粒度が粗かった）。
  */
 public abstract class RegistrationException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
     protected RegistrationException(String message) {
         super(message);
     }
